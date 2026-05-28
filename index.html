@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>人権ゲーム — 権利カード一覧</title>
+<style>
+  :root {
+    --c-purple:    #3C3489;
+    --c-purple-lt: #EEEDFE;
+    --c-red:       #A32D2D;
+    --c-red-lt:    #FCEBEB;
+    --c-blue:      #185FA5;
+    --c-blue-lt:   #E6F1FB;
+    --c-amber:     #854F0B;
+    --c-amber-lt:  #FAEEDA;
+    --c-teal:      #0F6E56;
+    --c-teal-lt:   #E1F5EE;
+    --c-gray:      #444441;
+    --c-gray-lt:   #F4F3EE;
+    --c-border:    #D3D1C7;
+    --c-bg:        #FAFAF8;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans',
+                 'Noto Sans JP', sans-serif;
+    background: var(--c-bg);
+    color: var(--c-gray);
+    min-height: 100vh;
+  }
+
+  /* ── ヘッダー ── */
+  .header {
+    background: var(--c-purple);
+    padding: 18px 16px 14px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 12px rgba(60,52,137,.3);
+  }
+  .header-title {
+    font-size: 1.15rem; font-weight: 700;
+    color: #fff; letter-spacing: .03em; margin-bottom: 2px;
+  }
+  .header-sub { font-size: .7rem; color: #AFA9EC; margin-bottom: 10px; }
+  .search-wrap { position: relative; }
+  .search-input {
+    display: block; width: 100%;
+    padding: 10px 14px 10px 36px;
+    border-radius: 10px; border: none; outline: none;
+    font-size: 1rem; font-family: inherit;
+    background: rgba(255,255,255,.15);
+    color: #fff; -webkit-appearance: none;
+  }
+  .search-input::placeholder { color: rgba(255,255,255,.5); }
+  .search-icon {
+    position: absolute; left: 11px; top: 50%;
+    transform: translateY(-50%);
+    font-size: .95rem; pointer-events: none;
+  }
+
+  /* ── フィルター ── */
+  .filters {
+    display: flex; gap: 6px; overflow-x: auto;
+    padding: 10px 16px 2px; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+  .filter-btn {
+    flex-shrink: 0;
+    padding: 6px 13px; border-radius: 999px;
+    font-size: .75rem; font-weight: 600;
+    border: 1.5px solid transparent;
+    cursor: pointer; font-family: inherit;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity .15s;
+  }
+  .filter-btn:not(.active) { opacity: .5; }
+  .filter-all  { background: var(--c-purple-lt); color: var(--c-purple); border-color: var(--c-purple); }
+  .filter-A    { background: var(--c-red-lt);    color: var(--c-red);    border-color: #F09595; }
+  .filter-B    { background: var(--c-purple-lt); color: var(--c-purple); border-color: #AFA9EC; }
+  .filter-C    { background: var(--c-blue-lt);   color: var(--c-blue);   border-color: #85B7EB; }
+  .filter-D    { background: var(--c-amber-lt);  color: var(--c-amber);  border-color: #FAC775; }
+  .filter-E    { background: var(--c-teal-lt);   color: var(--c-teal);   border-color: #5DCAA5; }
+
+  /* ── コンテンツ ── */
+  .content { padding: 10px 14px 72px; }
+  .count-bar {
+    text-align: right; font-size: .72rem;
+    color: #aaa; padding: 2px 2px 8px;
+  }
+
+  /* ── ジャンルヘッダー ── */
+  .genre-header {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 13px; border-radius: 10px;
+    margin: 6px 0 7px;
+  }
+  .genre-header-A { background: var(--c-red-lt); }
+  .genre-header-B { background: var(--c-purple-lt); }
+  .genre-header-C { background: var(--c-blue-lt); }
+  .genre-header-D { background: var(--c-amber-lt); }
+  .genre-header-E { background: var(--c-teal-lt); }
+  .genre-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+  }
+  .dot-A { background: var(--c-red); }
+  .dot-B { background: var(--c-purple); }
+  .dot-C { background: var(--c-blue); }
+  .dot-D { background: var(--c-amber); }
+  .dot-E { background: var(--c-teal); }
+  .genre-name-text {
+    font-size: .88rem; font-weight: 700;
+  }
+  .gname-A { color: var(--c-red); }
+  .gname-B { color: var(--c-purple); }
+  .gname-C { color: var(--c-blue); }
+  .gname-D { color: var(--c-amber); }
+  .gname-E { color: var(--c-teal); }
+  .genre-count-text {
+    margin-left: auto; font-size: .72rem; font-weight: 500;
+  }
+
+  /* ── カードアイテム ── */
+  .card-item {
+    background: #fff; border-radius: 12px;
+    border: 1px solid var(--c-border);
+    margin-bottom: 8px; overflow: hidden;
+  }
+  .card-top {
+    display: flex; align-items: flex-start;
+    padding: 12px 13px 6px;
+  }
+  .card-code {
+    font-size: .68rem; font-weight: 700;
+    padding: 2px 7px; border-radius: 4px;
+    margin-right: 8px; flex-shrink: 0; margin-top: 2px;
+    white-space: nowrap;
+  }
+  .code-A { background: var(--c-red-lt);    color: var(--c-red); }
+  .code-B { background: var(--c-purple-lt); color: var(--c-purple); }
+  .code-C { background: var(--c-blue-lt);   color: var(--c-blue); }
+  .code-D { background: var(--c-amber-lt);  color: var(--c-amber); }
+  .code-E { background: var(--c-teal-lt);   color: var(--c-teal); }
+  .card-name {
+    font-size: .98rem; font-weight: 700;
+    line-height: 1.4; flex: 1; color: #1a1a2e;
+  }
+  .card-meta {
+    display: flex; align-items: center; gap: 8px;
+    padding: 0 13px 8px;
+  }
+  .card-ref { font-size: .72rem; color: #888; }
+  .card-stars { font-size: .8rem; }
+  .stars-A { color: var(--c-red); }
+  .stars-B { color: var(--c-purple); }
+  .stars-C { color: var(--c-blue); }
+  .stars-D { color: var(--c-amber); }
+  .stars-E { color: var(--c-teal); }
+  .card-desc {
+    font-size: .82rem; line-height: 1.68;
+    color: #555; padding: 8px 13px 12px;
+    border-top: 1px solid var(--c-border);
+  }
+
+  mark { background: #FFE066; border-radius: 2px; padding: 0 1px; }
+
+  /* ── フッター ── */
+  .footer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(250,250,248,.95);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-top: 1px solid var(--c-border);
+    padding: 8px 16px;
+    text-align: center; font-size: .7rem; color: #aaa;
+  }
+
+  .card-link {
+    padding: 6px 13px 10px;
+    border-top: 1px dashed var(--c-border);
+  }
+  .card-link a {
+    font-size: .75rem; color: var(--c-purple);
+    text-decoration: none; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 3px;
+  }
+  .card-link a:hover { text-decoration: underline; }
+  .empty-msg {
+    text-align: center; padding: 48px 20px;
+    color: #bbb; font-size: .9rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-title">人権ゲーム — 権利カード一覧</div>
+  <div class="header-sub">HUMAN RIGHTS GAME ／ 解説一覧表</div>
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input class="search-input" type="search" id="searchInput"
+           placeholder="権利名・条文・キーワードで検索…"
+           autocomplete="off" autocorrect="off" spellcheck="false">
+  </div>
+</div>
+
+<div class="filters" id="filters">
+  <button class="filter-btn filter-all active" data-genre="all">すべて</button>
+  <button class="filter-btn filter-A" data-genre="A">身体・自由系</button>
+  <button class="filter-btn filter-B" data-genre="B">表現・思想系</button>
+  <button class="filter-btn filter-C" data-genre="C">プライバシー系</button>
+  <button class="filter-btn filter-D" data-genre="D">教育・労働系</button>
+  <button class="filter-btn filter-E" data-genre="E">平等・差別系</button>
+</div>
+
+<div class="content" id="content"></div>
+<div class="footer">★☆☆ ときどき　★★☆ よく使う　★★★ 存在そのもの</div>
+
+<script>
+const GENRES = [
+  { key:'A', name:'身体・自由系' },
+  { key:'B', name:'表現・思想系' },
+  { key:'C', name:'プライバシー系' },
+  { key:'D', name:'教育・労働系' },
+  { key:'E', name:'平等・差別系' },
+];
+
+const CASES = {
+  'A-01': { title: '足利事件（冤罪・不当逮捕）', url: 'https://ja.wikipedia.org/wiki/%E8%B6%B3%E5%88%A9%E4%BA%8B%E4%BB%B6' },
+  'A-02': { title: '袴田事件（自白強要・冤罪）', url: 'https://ja.wikipedia.org/wiki/%E8%A2%B4%E7%94%B0%E4%BA%8B%E4%BB%B6' },
+  'A-03': { title: '弁護人依頼権に関する判例（最高裁）', url: 'https://ja.wikipedia.org/wiki/%E5%BC%81%E8%AD%B7%E4%BA%BA%E4%BE%9D%E9%A0%BC%E6%A8%A9' },
+  'A-04': { title: '帆足計事件（移転・渡航の自由）', url: 'https://ja.wikipedia.org/wiki/%E5%B8%86%E8%B6%B3%E8%A8%88%E4%BA%8B%E4%BB%B6' },
+  'A-05': { title: '川崎民商事件（住居の不可侵）', url: 'https://ja.wikipedia.org/wiki/%E5%B7%9D%E5%B4%8E%E6%B0%91%E5%95%86%E4%BA%8B%E4%BB%B6' },
+  'A-06': { title: '拷問禁止と憲法36条（法務省）', url: 'https://ja.wikipedia.org/wiki/%E6%97%A5%E6%9C%AC%E5%9B%BD%E6%86%B2%E6%B3%95%E7%AC%AC36%E6%9D%A1' },
+  'B-01': { title: '博多駅テレビフィルム提出命令事件', url: 'https://ja.wikipedia.org/wiki/%E5%8D%9A%E5%A4%9A%E9%A7%85%E3%83%86%E3%83%AC%E3%83%93%E3%83%95%E3%82%A3%E3%83%AB%E3%83%A0%E6%8F%90%E5%87%BA%E5%91%BD%E4%BB%A4%E4%BA%8B%E4%BB%B6' },
+  'B-02': { title: '麹町中学校内申書事件（思想・良心の自由）', url: 'https://ja.wikipedia.org/wiki/%E9%BA%B9%E7%94%BA%E4%B8%AD%E5%AD%A6%E6%A0%A1%E5%86%85%E7%94%B3%E6%9B%B8%E4%BA%8B%E4%BB%B6' },
+  'B-03': { title: 'エホバの証人輸血拒否事件（信教の自由）', url: 'https://ja.wikipedia.org/wiki/%E3%82%A8%E3%83%9B%E3%83%90%E3%81%AE%E8%A8%BC%E4%BA%BA%E8%BC%B8%E8%A1%80%E6%8B%92%E5%90%A6%E4%BA%8B%E4%BB%B6' },
+  'B-04': { title: '京都府学連事件（集会・デモの自由）', url: 'https://ja.wikipedia.org/wiki/%E4%BA%AC%E9%83%BD%E5%BA%9C%E5%AD%A6%E9%80%A3%E4%BA%8B%E4%BB%B6' },
+  'B-05': { title: '東大ポポロ事件（学問の自由）', url: 'https://ja.wikipedia.org/wiki/%E6%9D%B1%E5%A4%A7%E3%83%9D%E3%83%9D%E3%83%AD%E4%BA%8B%E4%BB%B6' },
+  'B-06': { title: '請願権（総務省・請願制度の解説）', url: 'https://ja.wikipedia.org/wiki/%E8%AB%8B%E9%A1%98%E6%A8%A9' },
+  'C-01': { title: '宴のあと事件（プライバシー権の先駆け）', url: 'https://ja.wikipedia.org/wiki/%E5%AE%B4%E3%81%AE%E3%81%82%E3%81%A8%E4%BA%8B%E4%BB%B6' },
+  'C-02': { title: '通信の秘密と盗聴法（Wikipedia）', url: 'https://ja.wikipedia.org/wiki/%E9%80%9A%E4%BF%A1%E3%81%AE%E7%A7%98%E5%AF%86' },
+  'C-03': { title: '京都府学連事件（肖像権の確立）', url: 'https://ja.wikipedia.org/wiki/%E4%BA%AC%E9%83%BD%E5%BA%9C%E5%AD%A6%E9%80%A3%E4%BA%8B%E4%BB%B6' },
+  'C-04': { title: '早稲田大学江沢民事件（個人情報保護）', url: 'https://ja.wikipedia.org/wiki/%E6%97%A9%E7%A8%B2%E7%94%B0%E5%A4%A7%E5%AD%A6%E6%B1%9F%E6%B2%A2%E6%B0%91%E8%AC%9B%E6%BC%94%E4%BC%9A%E4%BA%8B%E4%BB%B6' },
+  'C-05': { title: '名誉毀損と表現の自由（最高裁判例）', url: 'https://ja.wikipedia.org/wiki/%E5%90%8D%E8%AA%89%E6%AF%81%E6%90%8D' },
+  'C-06': { title: '情報公開法と知る権利（総務省）', url: 'https://www.soumu.go.jp/gyoukan/kanri/jyohokokai/index.html' },
+  'D-01': { title: '義務教育無償と旭川学力テスト事件', url: 'https://ja.wikipedia.org/wiki/%E6%97%AD%E5%B7%9D%E5%AD%A6%E5%8A%9B%E3%83%86%E3%82%B9%E3%83%88%E4%BA%8B%E4%BB%B6' },
+  'D-02': { title: '薬局距離制限事件（職業選択の自由）', url: 'https://ja.wikipedia.org/wiki/%E8%96%AC%E5%B1%80%E8%B7%9D%E9%9B%A2%E5%88%B6%E9%99%90%E4%BA%8B%E4%BB%B6' },
+  'D-03': { title: '勤労の権利と失業給付（厚生労働省）', url: 'https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/koyou_roudou/koyou/koyouhoken/index.html' },
+  'D-04': { title: '朝日新聞事件（団体交渉権）', url: 'https://ja.wikipedia.org/wiki/%E5%8B%A4%E5%8A%B4%E4%B8%89%E6%A8%A9' },
+  'D-05': { title: '三菱樹脂事件（労働権・団体行動権）', url: 'https://ja.wikipedia.org/wiki/%E4%B8%89%E8%8F%B1%E6%A8%B9%E8%84%82%E4%BA%8B%E4%BB%B6' },
+  'D-06': { title: '朝日訴訟（生存権の確立）', url: 'https://ja.wikipedia.org/wiki/%E6%9C%9D%E6%97%A5%E8%A8%B4%E8%A8%9F' },
+  'E-01': { title: '尊属殺重罰規定違憲判決（平等権）', url: 'https://ja.wikipedia.org/wiki/%E5%B0%8A%E5%B1%9E%E6%AE%BA%E9%87%8D%E7%BD%B0%E8%A6%8F%E5%AE%9A%E9%81%95%E6%86%B2%E5%88%A4%E6%B1%BA' },
+  'E-02': { title: '再婚禁止期間違憲判決（男女平等）', url: 'https://ja.wikipedia.org/wiki/%E5%A5%B3%E6%80%A7%E3%81%AE%E5%86%8D%E5%A9%9A%E7%A6%81%E6%AD%A2%E6%9C%9F%E9%96%93' },
+  'E-03': { title: '障害者差別解消法の施行（内閣府）', url: 'https://www8.cao.go.jp/shougai/suishin/sabekai.html' },
+  'E-04': { title: 'こども基本法（こども家庭庁）', url: 'https://www.cfa.go.jp/policies/kodomo-kihon/' },
+  'E-05': { title: '裁判を受ける権利（最高裁判所）', url: 'https://www.courts.go.jp/saiban/syurui/syurui_minzi/index.html' },
+  'E-06': { title: '旧優生保護法違憲国家賠償請求訴訟（Wikipedia）', url: 'https://ja.wikipedia.org/wiki/%E6%97%A7%E5%84%AA%E7%94%9F%E4%BF%9D%E8%AD%B7%E6%B3%95%E9%81%95%E6%86%B2%E5%9B%BD%E5%AE%B6%E8%B3%A0%E5%84%9F%E8%AB%8B%E6%B1%82%E8%A8%B4%E8%A8%9F' },
+};
+
+const RIGHTS = [
+  {g:'A',c:'A-01',n:'不当逮捕されない権利',r:'憲法33条',s:'★★☆',
+   d:'何人も、現行犯として逮捕される場合を除いては、権限を有する司法官憲が発した令状によらなければ逮捕されない。不当な逮捕から身を守る基本的な権利。'},
+  {g:'A',c:'A-02',n:'黙秘権',r:'憲法38条',s:'★★☆',
+   d:'何人も、自己に不利益な供述を強要されない。取調べでも黙っている権利があり、黙秘を不利益に使うことは禁じられている。'},
+  {g:'A',c:'A-03',n:'弁護人依頼権',r:'憲法37条',s:'★★☆',
+   d:'刑事被告人は、いかなる場合にも資格を有する弁護人を依頼することができる。逮捕直後から弁護士への連絡を求める権利がある。'},
+  {g:'A',c:'A-04',n:'居住・移転の自由',r:'憲法22条',s:'★★★',
+   d:'何人も、公共の福祉に反しない限り、居住・移転の自由を有する。住む場所を自由に選び、転居する権利。'},
+  {g:'A',c:'A-05',n:'住居の不可侵',r:'憲法35条',s:'★★☆',
+   d:'何人も、正当な理由に基づく令状によらなければ住居への侵入・捜索を受けない。自宅は最も守られるプライベートな空間。'},
+  {g:'A',c:'A-06',n:'拷問を受けない権利',r:'憲法36条',s:'★★☆',
+   d:'公務員による拷問及び残虐な刑罰は、絶対にこれを禁ずる。いかなる理由があっても拷問は許されない絶対的な禁止規定。'},
+  {g:'B',c:'B-01',n:'表現の自由',r:'憲法21条',s:'★★☆',
+   d:'言論・出版その他一切の表現の自由は、これを保障する。権力への批判も含め、自由に意見を表明できる権利。'},
+  {g:'B',c:'B-02',n:'思想・良心の自由',r:'憲法19条',s:'★★★',
+   d:'思想及び良心の自由は、これを侵してはならない。内心で何を考えるかは国が干渉できない最も基本的な自由のひとつ。'},
+  {g:'B',c:'B-03',n:'信教の自由',r:'憲法20条',s:'★★☆',
+   d:'信教の自由は、何人に対してもこれを保障する。どの宗教を信じるか、または信じないかは完全に個人の自由。'},
+  {g:'B',c:'B-04',n:'集会・結社の自由',r:'憲法21条',s:'★★☆',
+   d:'集会・結社の自由は憲法21条で保障される。平和的な集会やグループ活動を国が一方的に禁止することはできない。'},
+  {g:'B',c:'B-05',n:'学問の自由',r:'憲法23条',s:'★★☆',
+   d:'学問の自由は、これを保障する。研究内容や学習の方向性を国が制限することは許されない。'},
+  {g:'B',c:'B-06',n:'請願権',r:'憲法16条',s:'★☆☆',
+   d:'何人も、損害の救済・法律の制定廃止等について平穏に請願する権利を有する。国や地方自治体に意見や要望を申し出られる。'},
+  {g:'C',c:'C-01',n:'プライバシーの権利',r:'憲法13条・判例',s:'★★★',
+   d:'プライバシーの権利は憲法13条の幸福追求権から導かれる（判例）。私生活をみだりに公開されない法的保障を受ける権利。'},
+  {g:'C',c:'C-02',n:'通信の秘密',r:'憲法21条',s:'★★☆',
+   d:'通信の秘密は、これを侵してはならない。手紙・メール・電話など私的な通信の内容は第三者に見られない。'},
+  {g:'C',c:'C-03',n:'肖像権',r:'憲法13条・判例',s:'★★☆',
+   d:'肖像権は憲法13条の幸福追求権から導かれる（判例）。本人の同意なく顔や姿を撮影・公開することは許されない。'},
+  {g:'C',c:'C-04',n:'個人情報保護の権利',r:'個人情報保護法',s:'★★★',
+   d:'個人情報の取扱いは個人情報保護法で規律される。氏名・住所・生年月日などを本人の同意なく利用することは禁止。'},
+  {g:'C',c:'C-05',n:'名誉権',r:'憲法13条・民法710条',s:'★★☆',
+   d:'名誉権は憲法13条と民法710条で保護される。事実に基づかない情報で社会的評価を下げる行為に対し法的救済を求められる。'},
+  {g:'C',c:'C-06',n:'知る権利',r:'憲法21条・情報公開法',s:'★★☆',
+   d:'知る権利は憲法21条の表現の自由から導かれ、情報公開法で具体化される。行政機関が持つ情報の開示を請求できる。'},
+  {g:'D',c:'D-01',n:'教育を受ける権利',r:'憲法26条',s:'★★★',
+   d:'すべて国民は、法律の定めるところにより教育を受ける権利を有する。義務教育は無償。経済的理由で教育を拒まれることはない。'},
+  {g:'D',c:'D-02',n:'職業選択の自由',r:'憲法22条',s:'★★★',
+   d:'何人も職業選択の自由を有する。国が職業を割り当てることはできず、自分で仕事を選ぶ権利が保障される。'},
+  {g:'D',c:'D-03',n:'勤労の権利',r:'憲法27条',s:'★★★',
+   d:'勤労の権利は憲法27条で保障される。国は雇用の機会を確保する義務を負い、失業給付など社会保障制度で支える。'},
+  {g:'D',c:'D-04',n:'団体交渉権',r:'憲法28条',s:'★★☆',
+   d:'勤労者の団体交渉権は憲法28条で保障される。労働者が集団で使用者と交渉する権利は法律で守られている。'},
+  {g:'D',c:'D-05',n:'団体行動権（スト権）',r:'憲法28条',s:'★★☆',
+   d:'勤労者の団体行動権（争議権）は憲法28条で保障される。正当なストライキを理由とした解雇・懲戒は違法。'},
+  {g:'D',c:'D-06',n:'生存権',r:'憲法25条',s:'★★★',
+   d:'すべて国民は、健康で文化的な最低限度の生活を営む権利を有する。生活保護はこの権利を具体化した制度。'},
+  {g:'E',c:'E-01',n:'法の下の平等',r:'憲法14条',s:'★★★',
+   d:'すべて国民は、法の下に平等であって、人種・信条・性別・社会的身分等により差別されない。あらゆる差別を禁じる根本規定。'},
+  {g:'E',c:'E-02',n:'男女平等権',r:'憲法14条・24条',s:'★★★',
+   d:'両性は、法律上平等の権利を有する。雇用・教育・日常生活における性差別は法律で禁じられている。'},
+  {g:'E',c:'E-03',n:'障害を理由に差別されない権利',r:'障害者差別解消法',s:'★★★',
+   d:'障害を理由とする差別の解消を推進するため、行政機関・民間事業者に合理的配慮を義務付ける（障害者差別解消法）。'},
+  {g:'E',c:'E-04',n:'子どもの権利',r:'こども基本法',s:'★★★',
+   d:'子どもが自身の権利の主体であることを明確にし、意見が尊重されることを規定する（こども基本法・2023年施行）。'},
+  {g:'E',c:'E-05',n:'裁判を受ける権利',r:'憲法32条',s:'★★☆',
+   d:'何人も、裁判所において裁判を受ける権利を奪はれない。すべての人が法律上の紛争を裁判所で解決を求められる。'},
+  {g:'E',c:'E-06',n:'国家賠償請求権',r:'憲法17条',s:'★☆☆',
+   d:'国又は公共団体の公権力の行使に当たる公務員が違法に損害を与えた場合、国・公共団体がこれを賠償する（憲法17条）。'},
+];
+
+const GENRE_NAMES = {A:'身体・自由系',B:'表現・思想系',C:'プライバシー系',D:'教育・労働系',E:'平等・差別系'};
+
+let activeGenre = 'all';
+let query = '';
+
+function esc(str) {
+  return str.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function hi(text, q) {
+  if (!q) return esc(text);
+  const escaped_q = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return esc(text).replace(new RegExp('(' + esc(escaped_q) + ')', 'gi'), '<mark>$1</mark>');
+}
+
+function render() {
+  const q = query.toLowerCase();
+  const content = document.getElementById('content');
+  let html = '';
+  let total = 0;
+
+  for (const gk of ['A','B','C','D','E']) {
+    if (activeGenre !== 'all' && activeGenre !== gk) continue;
+
+    const items = RIGHTS.filter(r => {
+      if (r.g !== gk) return false;
+      if (!q) return true;
+      return (r.n + r.r + r.d + r.c).toLowerCase().includes(q);
+    });
+
+    if (!items.length) continue;
+    total += items.length;
+
+    html += `<div class="genre-header genre-header-${gk}">
+      <div class="genre-dot dot-${gk}"></div>
+      <span class="genre-name-text gname-${gk}">${GENRE_NAMES[gk]}</span>
+      <span class="genre-count-text gname-${gk}">${items.length}枚</span>
+    </div>`;
+
+    for (const r of items) {
+      var caseInfo = CASES[r.c];
+      var caseHtml = caseInfo
+        ? '<div class="card-link"><a href="' + caseInfo.url + '" target="_blank" rel="noopener">📖 ' + caseInfo.title + ' →</a></div>'
+        : '';
+      html += '<div class="card-item">'
+        + '<div class="card-top">'
+        + '<span class="card-code code-' + r.g + '">' + r.c + '</span>'
+        + '<span class="card-name">' + hi(r.n, q) + '</span>'
+        + '</div>'
+        + '<div class="card-meta">'
+        + '<span class="card-ref">' + hi(r.r, q) + '</span>'
+        + '<span class="card-stars stars-' + r.g + '">' + r.s + '</span>'
+        + '</div>'
+        + '<div class="card-desc">' + hi(r.d, q) + '</div>'
+        + caseHtml
+        + '</div>';
+    }
+  }
+
+  content.innerHTML =
+    `<div class="count-bar">${total}件</div>` +
+    (html || '<div class="empty-msg">該当する権利が見つかりませんでした</div>');
+}
+
+document.getElementById('searchInput').addEventListener('input', function() {
+  query = this.value.trim();
+  render();
+});
+
+document.getElementById('filters').addEventListener('click', function(e) {
+  var btn = e.target.closest('.filter-btn');
+  if (!btn) return;
+  document.querySelectorAll('.filter-btn').forEach(function(b) {
+    b.classList.remove('active');
+  });
+  btn.classList.add('active');
+  activeGenre = btn.getAttribute('data-genre');
+  render();
+});
+
+render();
+</script>
+</body>
+</html>
